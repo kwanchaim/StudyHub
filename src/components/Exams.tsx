@@ -83,18 +83,25 @@ function normalizeIcalUrl(raw: string): string {
 
 async function fetchIcsText(url: string): Promise<string> {
   if (Capacitor.isNativePlatform()) {
-    const res = await CapacitorHttp.get({ url, responseType: "text" });
-    if (res.status < 200 || res.status >= 300) throw new Error("เซิร์ฟเวอร์ตอบ HTTP " + res.status);
+    // Native HTTP on Android — bypasses CORS completely
+    const res = await CapacitorHttp.get({
+      url,
+      responseType: "text",
+      headers: { Accept: "text/calendar, text/plain, */*" },
+    });
+    if (res.status < 200 || res.status >= 300) throw new Error("HTTP_" + res.status);
     return typeof res.data === "string" ? res.data : JSON.stringify(res.data);
   }
+  // Web browser — Google Calendar blocks fetch() due to CORS (no Access-Control-Allow-Origin)
+  // Do NOT proxy through a third-party service as the secret URL contains auth tokens
+  let res: Response;
   try {
-    const r = await fetch(url);
-    if (r.ok) return await r.text();
-  } catch (e) { /* CORS/network */ }
-  const proxied = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
-  const res = await fetch(proxied);
-  if (!res.ok) throw new Error("พร็อกซีดึงข้อมูลไม่สำเร็จ (HTTP " + res.status + ")");
-  return await res.text();
+    res = await fetch(url);
+  } catch {
+    throw new Error("CORS_BLOCK");
+  }
+  if (!res.ok) throw new Error("HTTP_" + res.status);
+  return res.text();
 }
 
 const GCAL_URL_KEY = "sh:gcal_url";
@@ -145,18 +152,29 @@ export default function Exams() {
   const doSync = async () => {
     const raw = icalUrl.trim();
     if (!raw) return;
-    localStorage.setItem(GCAL_URL_KEY, raw);
+    const url = normalizeIcalUrl(raw);
+    setIcalUrl(url);
+    localStorage.setItem(GCAL_URL_KEY, url);
     setSyncStatus("syncing");
     setSyncError("");
     try {
-      const text = await fetchIcsText(normalizeIcalUrl(raw));
-      if (!/BEGIN:VCALENDAR/i.test(text)) {
-        throw new Error("ลิงก์นี้ไม่ใช่ปฏิทิน iCal — ตรวจว่าคัดลอกที่อยู่ลับในรูปแบบ iCal มาถูกต้อง");
+      const text = await fetchIcsText(url);
+      if (!text.includes("BEGIN:VCALENDAR") && !text.includes("BEGIN:VEVENT")) {
+        throw new Error("NOT_ICS");
       }
       saveGcal(parseICS(text));
     } catch (err) {
       setSyncStatus("error");
-      setSyncError(err instanceof Error ? err.message : "ดึงปฏิทินไม่สำเร็จ");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg === "CORS_BLOCK" || msg.includes("Failed to fetch") || msg.includes("Load failed") || msg.includes("NetworkError")) {
+        setSyncError("CORS");
+      } else if (msg === "NOT_ICS") {
+        setSyncError("NOT_ICS");
+      } else if (msg.startsWith("HTTP_")) {
+        setSyncError(msg);
+      } else {
+        setSyncError("UNKNOWN");
+      }
     }
   };
 
@@ -307,28 +325,64 @@ export default function Exams() {
                 </button>
               </div>
 
+              {/* Error detail */}
+              {syncStatus === "error" && (
+                <div className="rounded-2xl bg-rose-500/10 border border-rose-500/20 p-3 space-y-1.5">
+                  {syncError === "CORS" && (
+                    <>
+                      <p className="text-xs font-bold text-rose-500">⚠ เบราว์เซอร์บล็อก (CORS)</p>
+                      <p className="text-xs text-rose-400 leading-relaxed">
+                        Google Calendar ไม่อนุญาตให้เบราว์เซอร์ดึง URL โดยตรง —
+                        กรุณาใช้ปุ่ม <strong className="text-rose-300">"นำเข้าไฟล์ .ics"</strong> ด้านล่างแทน
+                        (บน APK จะซิงก์ URL ได้ปกติผ่าน native HTTP)
+                      </p>
+                    </>
+                  )}
+                  {syncError === "NOT_ICS" && (
+                    <>
+                      <p className="text-xs font-bold text-rose-500">⚠ ไม่ใช่ไฟล์ iCal</p>
+                      <p className="text-xs text-rose-400">URL หรือไฟล์นี้ไม่ใช่รูปแบบ iCal — ตรวจสอบว่าคัดลอก "ที่อยู่ลับในรูปแบบ iCal" มาถูกต้อง</p>
+                    </>
+                  )}
+                  {syncError.startsWith("HTTP_") && (
+                    <>
+                      <p className="text-xs font-bold text-rose-500">⚠ URL ตอบสนองผิดพลาด ({syncError.replace("HTTP_", "HTTP ")})</p>
+                      <p className="text-xs text-rose-400">URL อาจหมดอายุหรือเปลี่ยนแล้ว — ไปหา URL ใหม่จาก Google Calendar Settings</p>
+                    </>
+                  )}
+                  {syncError === "UNKNOWN" && (
+                    <>
+                      <p className="text-xs font-bold text-rose-500">⚠ เกิดข้อผิดพลาด</p>
+                      <p className="text-xs text-rose-400">ตรวจการเชื่อมต่ออินเทอร์เน็ต หรือลองนำเข้าไฟล์ .ics แทน</p>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* File import fallback */}
-              <div className="flex items-center gap-3 text-sm">
-                <span className="text-muted text-xs">หรือ</span>
+              <div className="flex items-center gap-3 flex-wrap">
                 <button
                   onClick={() => fileRef.current?.click()}
-                  className="flex items-center gap-1.5 rounded-xl bg-surface2 px-3 py-2 text-sm font-semibold text-muted hover:bg-brand/15 hover:text-brand transition"
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                    syncError === "CORS"
+                      ? "bg-brand text-white hover:bg-brand/80 shadow-lg shadow-brand/20"
+                      : "bg-surface2 text-muted hover:bg-brand/15 hover:text-brand"
+                  }`}
                 >
                   <Upload size={14} /> นำเข้าไฟล์ .ics
                 </button>
-                <input ref={fileRef} type="file" accept=".ics" className="hidden" onChange={handleFile} />
-                <span className="text-xs text-muted">(สำรองเผื่อ CORS บล็อก URL — APK รองรับ fetch ตรง)</span>
+                <input ref={fileRef} type="file" accept=".ics,text/calendar" className="hidden" onChange={handleFile} />
+                <span className="text-xs text-muted">
+                  {Capacitor.isNativePlatform()
+                    ? "ทางเลือกสำรองนอกจากซิงก์ URL"
+                    : "วิธีแนะนำบนเบราว์เซอร์ — Google Calendar → ⚙ → Export"}
+                </span>
               </div>
 
               {/* Status / count */}
-              {gcalEvents.length > 0 && (
+              {syncStatus === "done" && gcalEvents.length > 0 && (
                 <p className="text-xs text-emerald-500 font-semibold">
-                  📅 โหลดแล้ว {gcalEvents.length} นัดหมายจาก Google Calendar
-                </p>
-              )}
-              {syncStatus === "error" && (
-                <p className="text-xs text-rose-500 font-semibold">
-                  ⚠ {syncError || "ดึงข้อมูลไม่สำเร็จ"} — ถ้ายังไม่ได้ ลองนำเข้าไฟล์ .ics แทน
+                  ✓ โหลดแล้ว {gcalEvents.length} นัดหมายจาก Google Calendar
                 </p>
               )}
 
