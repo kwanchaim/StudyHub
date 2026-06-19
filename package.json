@@ -12,6 +12,7 @@
     "@capacitor/android": "^6.2.1",
     "@capacitor/cli": "^6.2.1",
     "@capacitor/core": "^6.2.1",
+    "@capacitor/preferences": "^8.0.1",
     "@fontsource/noto-sans-thai": "^5.2.8",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.40.0",

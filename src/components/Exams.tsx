@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Globe, MapPin, Pencil, Plus, RefreshCw, Trash2, Upload, ExternalLink } from "lucide-react";
 import type { Exam } from "../types";
@@ -7,6 +7,7 @@ import { uid } from "../storage";
 import { daysFromToday, formatThaiDate, formatThaiTime, toISODate, WEEKDAY_LETTERS } from "../lib";
 import { Button, Modal, inputCls, labelCls } from "./ui";
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
+import { Preferences } from "@capacitor/preferences";
 
 const MONTHS = [
   "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
@@ -155,7 +156,7 @@ export default function Exams() {
   const [showAssignments, setShowAssignments] = useState(true);
 
   // ── Google Calendar sync ──
-  const [icalUrl, setIcalUrl] = useState(() => localStorage.getItem(GCAL_URL_KEY) ?? "");
+  const [icalUrl, setIcalUrl] = useState("");
   const [gcalEvents, setGcalEventsState] = useState<Exam[]>(loadGcalEvents);
   const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "done" | "error">("idle");
   const [lastSynced, setLastSynced] = useState<number | null>(() => {
@@ -166,12 +167,63 @@ export default function Exams() {
   const [syncError, setSyncError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const saveGcal = (events: Exam[]) => {
+  // ── init: โหลดจาก Preferences (native) หรือ localStorage (web) + migration ──
+  useEffect(() => {
+    async function init() {
+      if (Capacitor.isNativePlatform()) {
+        // ตรวจ Preferences ก่อน
+        const { value: prefUrl } = await Preferences.get({ key: GCAL_URL_KEY });
+        if (prefUrl) {
+          setIcalUrl(prefUrl);
+        } else {
+          // Migration: ย้ายจาก localStorage เก่ามาเก็บใน Preferences
+          const lsUrl = localStorage.getItem(GCAL_URL_KEY) ?? "";
+          if (lsUrl) {
+            await Preferences.set({ key: GCAL_URL_KEY, value: lsUrl });
+            setIcalUrl(lsUrl);
+          }
+        }
+        // โหลด events cache จาก Preferences
+        const { value: prefEvents } = await Preferences.get({ key: GCAL_EVENTS_KEY });
+        if (prefEvents) {
+          try { setGcalEventsState(JSON.parse(prefEvents)); } catch { /* ignore */ }
+        } else {
+          // Migration: events cache
+          const lsEvents = localStorage.getItem(GCAL_EVENTS_KEY);
+          if (lsEvents) await Preferences.set({ key: GCAL_EVENTS_KEY, value: lsEvents });
+        }
+        // โหลด lastSynced
+        const { value: prefSynced } = await Preferences.get({ key: GCAL_SYNCED_KEY });
+        if (prefSynced) {
+          setLastSynced(Number(prefSynced));
+        } else {
+          const lsSynced = localStorage.getItem(GCAL_SYNCED_KEY);
+          if (lsSynced) {
+            await Preferences.set({ key: GCAL_SYNCED_KEY, value: lsSynced });
+            setLastSynced(Number(lsSynced));
+          }
+        }
+      } else {
+        // Web: ใช้ localStorage ตามเดิม
+        setIcalUrl(localStorage.getItem(GCAL_URL_KEY) ?? "");
+      }
+    }
+    init();
+  }, []);
+
+  const saveGcal = async (events: Exam[]) => {
     setGcalEventsState(events);
-    localStorage.setItem(GCAL_EVENTS_KEY, JSON.stringify(events));
+    const eventsJson = JSON.stringify(events);
     const ts = Date.now();
-    setLastSynced(ts);
+    // localStorage (ทั้ง native + web) — cache สำรอง
+    localStorage.setItem(GCAL_EVENTS_KEY, eventsJson);
     localStorage.setItem(GCAL_SYNCED_KEY, String(ts));
+    // Preferences (native only) — persistent ข้ามการอัปเดต APK
+    if (Capacitor.isNativePlatform()) {
+      await Preferences.set({ key: GCAL_EVENTS_KEY, value: eventsJson });
+      await Preferences.set({ key: GCAL_SYNCED_KEY, value: String(ts) });
+    }
+    setLastSynced(ts);
     setSyncStatus("done");
   };
 
@@ -180,7 +232,11 @@ export default function Exams() {
     if (!raw) return;
     const url = normalizeIcalUrl(raw);
     setIcalUrl(url);
+    // บันทึก URL ลง localStorage + Preferences
     localStorage.setItem(GCAL_URL_KEY, url);
+    if (Capacitor.isNativePlatform()) {
+      await Preferences.set({ key: GCAL_URL_KEY, value: url });
+    }
     setSyncStatus("syncing");
     setSyncError("");
     try {

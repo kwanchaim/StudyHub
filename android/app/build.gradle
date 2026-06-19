@@ -16,10 +16,22 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        studyhub {
+            storeFile file('../studyhub-release.keystore')
+            storePassword 'StudyHub2026'
+            keyAlias 'studyhub'
+            keyPassword 'StudyHub2026'
+        }
+    }
     buildTypes {
         release {
+            signingConfig signingConfigs.studyhub
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.studyhub
         }
     }
 }

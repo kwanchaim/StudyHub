@@ -17,23 +17,36 @@ function timeAgo(ms: number): string {
 }
 
 const BLANK = { id: "", subject: "", title: "", content: "" };
+const NO_SUBJECT = "__none__"; // sentinel สำหรับ filter "ไม่ระบุวิชา"
 
 export default function Notes() {
   const { notes, setNotes, subjects } = useStore();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(BLANK);
+  // null = ทั้งหมด, NO_SUBJECT = โน้ตไม่มีวิชา, string = วิชาเฉพาะ
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
   // รวม subjects จาก store + subjects ที่มีในโน้ตเดิม (ป้องกันโน้ตเก่าหายหมวด)
-  const allSubjects = useMemo(
-    () => Array.from(new Set([...subjects, ...notes.map((n) => n.subject)])).filter(Boolean).sort(),
-    [subjects, notes],
-  );
+  // ไม่กรอง "ทั่วไป" ออก — แต่ทำให้อยู่ท้ายสุดเสมอ และไม่ซ้ำ
+  const allSubjects = useMemo(() => {
+    const raw = Array.from(new Set([...subjects, ...notes.map((n) => n.subject)])).filter(Boolean).sort();
+    const withoutGeneral = raw.filter((s) => s !== "ทั่วไป");
+    return raw.includes("ทั่วไป") || withoutGeneral.length === 0
+      ? [...withoutGeneral, "ทั่วไป"]
+      : withoutGeneral;
+  }, [subjects, notes]);
 
-  const subjectOptions = allSubjects.length > 0 ? allSubjects : [];
+  // ตัวเลือกใน dropdown (ไม่ซ้ำ "ทั่วไป" — อยู่ท้ายสุดเสมอ)
+  const selectOptions = useMemo(() => {
+    const base = allSubjects.filter((s) => s !== "ทั่วไป");
+    return [...base, "ทั่วไป"];
+  }, [allSubjects]);
+
+  const hasNoSubjectNotes = notes.some((n) => !n.subject);
 
   const colorOf = (subject: string) => {
+    if (!subject) return "#9ca3af"; // gray สำหรับโน้ตไม่มีวิชา
     const palette = ["#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#a855f7"];
     let h = 0;
     for (const ch of subject) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -43,18 +56,29 @@ export default function Notes() {
   const filtered = useMemo(
     () =>
       [...notes]
-        .filter((n) => !activeSubject || n.subject === activeSubject)
+        .filter((n) => {
+          if (activeSubject === null) return true;
+          if (activeSubject === NO_SUBJECT) return !n.subject;
+          return n.subject === activeSubject;
+        })
         .sort((a, b) => b.updatedAt - a.updatedAt),
     [notes, activeSubject],
   );
 
+  // มีโน้ตที่ subject ว่างหรือไม่ (สำหรับ chip "ไม่ระบุวิชา")
+  const hasNoSubjectNotes = notes.some((n) => !n.subject);
+
+  // subject เริ่มต้นสำหรับ modal (ไม่ให้ว่าง)
+  const defaultSubject = selectOptions[0] ?? "ทั่วไป";
+
   const openNew = () => {
-    setEditing({ ...BLANK, subject: allSubjects[0] ?? "ทั่วไป" });
+    setEditing({ ...BLANK, subject: defaultSubject });
     setOpen(true);
   };
 
   const openEdit = (n: Note) => {
-    setEditing({ id: n.id, subject: n.subject, title: n.title, content: n.content });
+    // ถ้าโน้ตเก่าไม่มีวิชา → ตั้งต้นเป็น defaultSubject ให้ user เลือก
+    setEditing({ id: n.id, subject: n.subject || defaultSubject, title: n.title, content: n.content });
     setOpen(true);
   };
 
@@ -99,7 +123,7 @@ export default function Notes() {
       </div>
 
       {/* ตัวกรองตามวิชา */}
-      {allSubjects.length > 0 && (
+      {(allSubjects.length > 0 || hasNoSubjectNotes) && (
         <div className="flex flex-wrap gap-2">
           <Chip active={activeSubject === null} onClick={() => setActiveSubject(null)}>ทั้งหมด</Chip>
           {allSubjects.map((s) => (
@@ -107,6 +131,11 @@ export default function Notes() {
               {s}
             </Chip>
           ))}
+          {hasNoSubjectNotes && (
+            <Chip active={activeSubject === NO_SUBJECT} color="#9ca3af" onClick={() => setActiveSubject(NO_SUBJECT)}>
+              ไม่ระบุวิชา
+            </Chip>
+          )}
         </div>
       )}
 
@@ -132,7 +161,7 @@ export default function Notes() {
                     className="rounded-full px-2 py-0.5 text-xs font-semibold"
                     style={{ backgroundColor: c + "22", color: c }}
                   >
-                    {n.subject}
+                    {n.subject || "ไม่ระบุ"}
                   </span>
 
                   {isConfirm ? (
@@ -153,7 +182,8 @@ export default function Notes() {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
+                    /* ปุ่มแก้ไข/ลบ — มองเห็นได้เสมอ (ไม่ hidden บน mobile) */
+                    <div className="flex gap-1">
                       <button
                         onClick={(e) => { e.stopPropagation(); openEdit(n); }}
                         aria-label="แก้ไข"
@@ -194,19 +224,18 @@ export default function Notes() {
       {/* Modal เพิ่ม / แก้ไขโน้ต */}
       <Modal open={open} onClose={() => setOpen(false)} title={editing.id ? "แก้ไขโน้ต" : "เพิ่มโน้ต"}>
         <div className="space-y-4">
-          {/* วิชา — select dropdown เมื่อมีวิชาในระบบ */}
+          {/* วิชา — select dropdown (ไม่ซ้ำ "ทั่วไป", ค่าว่างถูก normalize แล้วก่อนเปิด modal) */}
           <div>
             <label className={labelCls}>วิชา</label>
-            {subjectOptions.length > 0 ? (
+            {selectOptions.length > 0 ? (
               <select
                 className={inputCls}
                 value={editing.subject}
                 onChange={(e) => setEditing({ ...editing, subject: e.target.value })}
               >
-                {subjectOptions.map((s) => (
+                {selectOptions.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
-                <option value="ทั่วไป">ทั่วไป</option>
               </select>
             ) : (
               <input
