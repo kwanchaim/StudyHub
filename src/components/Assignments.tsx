@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Pencil, Plus, Trash2 } from "lucide-react";
 import type { Assignment } from "../types";
 import { useStore } from "../store";
 import { uid } from "../storage";
@@ -13,6 +13,7 @@ type Filter = "all" | "pending" | "done";
 export default function Assignments() {
   const { assignments, setAssignments, subjects, award, celebrate } = useStore();
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [form, setForm] = useState({ title: "", subject: subjects[0] ?? "", due: todayISO(), detail: "" });
 
@@ -53,19 +54,33 @@ export default function Assignments() {
 
   const remove = (id: string) => setAssignments((prev) => prev.filter((a) => a.id !== id));
 
-  const add = () => {
+  const openNew = () => {
+    setEditingId(null);
+    setForm({ title: "", subject: subjects[0] ?? "", due: todayISO(), detail: "" });
+    setOpen(true);
+  };
+
+  const openEdit = (a: Assignment) => {
+    setEditingId(a.id);
+    setForm({ title: a.title, subject: a.subject, due: a.due, detail: a.detail });
+    setOpen(true);
+  };
+
+  const save = () => {
     if (!form.title.trim()) return;
-    const item: Assignment = {
-      id: uid(),
+    const data = {
       title: form.title.trim(),
       subject: form.subject.trim() || "ทั่วไป",
       due: form.due,
       detail: form.detail.trim(),
-      done: false,
-      createdAt: Date.now(),
     };
-    setAssignments((prev) => [item, ...prev]);
+    if (editingId) {
+      setAssignments((prev) => prev.map((a) => (a.id === editingId ? { ...a, ...data } : a)));
+    } else {
+      setAssignments((prev) => [{ id: uid(), ...data, done: false, createdAt: Date.now() }, ...prev]);
+    }
     setForm({ title: "", subject: subjects[0] ?? "", due: todayISO(), detail: "" });
+    setEditingId(null);
     setOpen(false);
   };
 
@@ -76,7 +91,7 @@ export default function Assignments() {
           <h1 className="text-2xl font-extrabold text-fg">งาน / การบ้าน</h1>
           <p className="text-sm text-muted">ทำเสร็จแต่ละชิ้นรับ +{XP.task} XP 🎉</p>
         </div>
-        <Button onClick={() => setOpen(true)}><Plus size={18} /> เพิ่มงาน</Button>
+        <Button onClick={openNew}><Plus size={18} /> เพิ่มงาน</Button>
       </div>
 
       <Segmented
@@ -122,9 +137,14 @@ export default function Assignments() {
                     <span className="text-xs text-muted/60">· {formatThaiDate(a.due)}</span>
                   </div>
                 </div>
-                <button onClick={() => remove(a.id)} aria-label="ลบ" className="rounded-lg p-1.5 text-muted transition hover:bg-rose-500/15 hover:text-rose-500">
-                  <Trash2 size={16} />
-                </button>
+                <div className="flex shrink-0 gap-0.5">
+                  <button onClick={() => openEdit(a)} aria-label="แก้ไข" className="rounded-lg p-1.5 text-muted transition hover:bg-brand/15 hover:text-brand">
+                    <Pencil size={15} />
+                  </button>
+                  <button onClick={() => remove(a.id)} aria-label="ลบ" className="rounded-lg p-1.5 text-muted transition hover:bg-rose-500/15 hover:text-rose-500">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </motion.div>
             );
           })}
@@ -137,7 +157,7 @@ export default function Assignments() {
         )}
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="เพิ่มงาน / การบ้าน">
+      <Modal open={open} onClose={() => setOpen(false)} title={editingId ? "แก้ไขงาน / การบ้าน" : "เพิ่มงาน / การบ้าน"}>
         <div className="space-y-4">
           <div>
             <label className={labelCls}>ชื่องาน</label>
@@ -166,7 +186,7 @@ export default function Assignments() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setOpen(false)}>ยกเลิก</Button>
-            <Button onClick={add}>บันทึก</Button>
+            <Button onClick={save}>บันทึก</Button>
           </div>
         </div>
       </Modal>

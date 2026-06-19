@@ -4,8 +4,9 @@ import { VOCAB, type VocabCategory, type GameDifficulty } from "../../data/gameC
 import { Button } from "../ui";
 import { playWrong, playComplete, shuffle, pickRandom } from "./gameUtils";
 import { triggerCelebration } from "./CelebrationEffects";
+import EmptyPool from "./EmptyPool";
 
-const TOTAL = 6;
+const DESIRED = 6;
 
 interface Props {
   category: VocabCategory;
@@ -26,7 +27,8 @@ function scramble(word: string): string[] {
 }
 
 export default function WordScramble({ category, difficulty, onComplete }: Props) {
-  const [pool] = useState(() => pickRandom(VOCAB.filter((v) => v.category === category && v.difficulty === difficulty), TOTAL));
+  const [pool] = useState(() => pickRandom(VOCAB.filter((v) => v.category === category && v.difficulty === difficulty), DESIRED));
+  const TOTAL = pool.length;
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
   const [phase, setPhase] = useState<"playing" | "correct" | "wrong">("playing");
@@ -100,6 +102,8 @@ export default function WordScramble({ category, difficulty, onComplete }: Props
     setRound(next);
     resetRound(next);
   };
+
+  if (TOTAL === 0) return <EmptyPool onComplete={onComplete} />;
 
   return (
     <div className="flex flex-col items-center gap-5">

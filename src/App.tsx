@@ -49,7 +49,7 @@ const NAV: NavItem[] = [
   { key: "dashboard", label: "ภาพรวม", icon: LayoutDashboard, group: "หลัก" },
   { key: "schedule", label: "ตารางเรียน", icon: CalendarDays, group: "หลัก" },
   { key: "assignments", label: "งาน/การบ้าน", icon: ListChecks, group: "หลัก" },
-  { key: "exams", label: "ปฏิทินสอบ", icon: GraduationCap, group: "หลัก" },
+  { key: "exams", label: "ปฏิทิน", icon: GraduationCap, group: "หลัก" },
   { key: "focus", label: "โหมดโฟกัส", icon: Timer, group: "ทบทวน" },
   { key: "flashcards", label: "แฟลชการ์ด", icon: Layers, group: "ทบทวน" },
   { key: "notes", label: "โน้ตวิชา", icon: NotebookPen, group: "ทบทวน" },

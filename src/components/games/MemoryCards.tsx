@@ -4,6 +4,7 @@ import { VOCAB, type VocabCategory, type GameDifficulty } from "../../data/gameC
 import { Button } from "../ui";
 import { playCorrect, playWrong, playComplete, shuffle } from "./gameUtils";
 import { triggerCelebration } from "./CelebrationEffects";
+import EmptyPool from "./EmptyPool";
 
 interface CardData {
   id: string;
@@ -95,6 +96,8 @@ export default function MemoryCards({ category, difficulty, onComplete }: Props)
     setWrongPair(null);
     completeRef.current = false;
   };
+
+  if (total === 0) return <EmptyPool onComplete={onComplete} />;
 
   return (
     <div className="flex flex-col items-center gap-4">

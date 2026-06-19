@@ -24,6 +24,7 @@ export default function SpeedMath({ difficulty, onComplete }: Props) {
   const [flash, setFlash] = useState<"correct" | "wrong" | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scoreRef = useRef(0); // กันค่า score ค้างใน closure ของ timer
 
   const endGame = useCallback((sc: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -41,6 +42,7 @@ export default function SpeedMath({ difficulty, onComplete }: Props) {
     setIdx(0);
     setInput("");
     setScore(0);
+    scoreRef.current = 0;
     setTotal(0);
     setCombo(0);
     setTimeLeft(GAME_DURATION);
@@ -49,7 +51,7 @@ export default function SpeedMath({ difficulty, onComplete }: Props) {
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
-          endGame(score);
+          endGame(scoreRef.current);
           return 0;
         }
         if (t <= 10) playTick();
@@ -75,6 +77,7 @@ export default function SpeedMath({ difficulty, onComplete }: Props) {
       const newScore = score + 1;
       const newCombo = combo + 1;
       setScore(newScore);
+      scoreRef.current = newScore;
       setCombo(newCombo);
       setMaxCombo((m) => Math.max(m, newCombo));
       if (newCombo >= 10 && newCombo % 5 === 0) triggerCelebration(2, newCombo);

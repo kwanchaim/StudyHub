@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { VOCAB, type VocabCategory, type GameDifficulty } from "../../data/gameContent";
 import { playCorrect, playWrong, playComplete, shuffle, pickRandom } from "./gameUtils";
 import { triggerCelebration } from "./CelebrationEffects";
+import EmptyPool from "./EmptyPool";
 
-const PAIR_COUNT = 6;
+const DESIRED_PAIRS = 6;
 
 interface Pair { word: string; meaning: string; id: number; }
 
@@ -15,12 +16,13 @@ interface Props {
 }
 
 function buildPairs(category: VocabCategory, difficulty: GameDifficulty): Pair[] {
-  return pickRandom(VOCAB.filter((v) => v.category === category && v.difficulty === difficulty), PAIR_COUNT)
+  return pickRandom(VOCAB.filter((v) => v.category === category && v.difficulty === difficulty), DESIRED_PAIRS)
     .map((v, i) => ({ word: v.word, meaning: v.meaning, id: i }));
 }
 
 export default function WordMatch({ category, difficulty, onComplete }: Props) {
   const [pairs] = useState(() => buildPairs(category, difficulty));
+  const PAIR_COUNT = pairs.length;
   const [wordOrder] = useState(() => shuffle(pairs.map((p) => p.id)));
   const [meaningOrder] = useState(() => shuffle(pairs.map((p) => p.id)));
   const [matched, setMatched] = useState<Set<number>>(new Set());
@@ -70,6 +72,8 @@ export default function WordMatch({ category, difficulty, onComplete }: Props) {
   };
 
   const score = PAIR_COUNT - errors;
+
+  if (PAIR_COUNT === 0) return <EmptyPool onComplete={onComplete} />;
 
   return (
     <div className="flex flex-col gap-4">

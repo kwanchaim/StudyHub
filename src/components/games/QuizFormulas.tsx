@@ -3,8 +3,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { FORMULAS, type FormulaSubject, type FormulaItem } from "../../data/gameContent";
 import { playCorrect, playWrong, playTick, pickRandom, shuffle } from "./gameUtils";
 import { triggerCelebration } from "./CelebrationEffects";
+import EmptyPool from "./EmptyPool";
 
-const TOTAL = 10;
+const DESIRED = 10;
 const TIME_PER_Q = 15;
 
 interface Props {
@@ -19,7 +20,7 @@ interface QuizQuestion extends FormulaItem {
 
 function buildPool(subject: FormulaSubject | "all"): QuizQuestion[] {
   const filtered = subject === "all" ? FORMULAS : FORMULAS.filter((f) => f.subject === subject);
-  return pickRandom(filtered, TOTAL).map((f) => ({
+  return pickRandom(filtered, DESIRED).map((f) => ({
     ...f,
     shuffledChoices: shuffle([...f.choices]),
   }));
@@ -27,6 +28,7 @@ function buildPool(subject: FormulaSubject | "all"): QuizQuestion[] {
 
 export default function QuizFormulas({ subject, onComplete }: Props) {
   const [pool] = useState<QuizQuestion[]>(() => buildPool(subject));
+  const TOTAL = pool.length;
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -91,6 +93,7 @@ export default function QuizFormulas({ subject, onComplete }: Props) {
     return stopTimer;
   }, [round, done, selected, advance, stopTimer]);
 
+  if (TOTAL === 0) return <EmptyPool onComplete={onComplete} />;
   if (!current) return null;
 
   const timePct = timeLeft / TIME_PER_Q;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Layers, Plus, RotateCw, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, Layers, Pencil, Plus, RotateCw, Sparkles, Trash2 } from "lucide-react";
 import { useStore } from "../store";
 import { SUBJECT_COLORS, uid } from "../storage";
 import { isDue, previewInterval, RATING_LABEL, schedule, type Rating } from "../srs";
@@ -22,11 +22,26 @@ export default function Flashcards() {
   const today = todayISO();
 
   const [reviewDeck, setReviewDeck] = useState<Deck | null>(null);
+  const [manageDeck, setManageDeck] = useState<Deck | null>(null);
   const [addDeckOpen, setAddDeckOpen] = useState(false);
   const [addCardDeck, setAddCardDeck] = useState<Deck | null>(null);
+  const [editDeck, setEditDeck] = useState<Deck | null>(null);
 
   const dueCountOf = (deckId: string) =>
     flashcards.filter((c) => c.deckId === deckId && isDue(c, today)).length;
+
+  if (manageDeck) {
+    return (
+      <ManageCards
+        deck={manageDeck}
+        cards={flashcards.filter((c) => c.deckId === manageDeck.id)}
+        onExit={() => setManageDeck(null)}
+        onAdd={(c) => setFlashcards((prev) => [...prev, c])}
+        onUpdate={(id, front, back) => setFlashcards((prev) => prev.map((c) => (c.id === id ? { ...c, front, back } : c)))}
+        onDelete={(id) => setFlashcards((prev) => prev.filter((c) => c.id !== id))}
+      />
+    );
+  }
 
   if (reviewDeck) {
     return (
@@ -71,20 +86,29 @@ export default function Flashcards() {
                 <div className="h-1.5" style={{ background: deck.color }} />
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate font-bold text-fg">{deck.name}</p>
+                    <button onClick={() => setManageDeck(deck)} className="min-w-0 text-left">
+                      <p className="truncate font-bold text-fg hover:text-brand transition">{deck.name}</p>
                       <Badge color={deck.color}>{deck.subject}</Badge>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setDecks((prev) => prev.filter((d) => d.id !== deck.id));
-                        setFlashcards((prev) => prev.filter((c) => c.deckId !== deck.id));
-                      }}
-                      className="text-muted/50 transition hover:text-rose-500"
-                      aria-label="ลบสำรับ"
-                    >
-                      <Trash2 size={16} />
                     </button>
+                    <div className="flex gap-0.5">
+                      <button
+                        onClick={() => setEditDeck(deck)}
+                        className="text-muted/50 transition hover:text-brand"
+                        aria-label="แก้ไขสำรับ"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDecks((prev) => prev.filter((d) => d.id !== deck.id));
+                          setFlashcards((prev) => prev.filter((c) => c.deckId !== deck.id));
+                        }}
+                        className="text-muted/50 transition hover:text-rose-500"
+                        aria-label="ลบสำรับ"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-4 flex items-center gap-3 text-sm">
@@ -97,8 +121,15 @@ export default function Flashcards() {
                   </div>
 
                   <div className="mt-4 flex gap-2">
-                    <Button onClick={() => setReviewDeck(deck)} disabled={due === 0} className="flex-1">
+                    <Button
+                      onClick={() => setReviewDeck(deck)}
+                      disabled={due === 0}
+                      className="flex-1"
+                    >
                       <Sparkles size={15} /> ทบทวน
+                    </Button>
+                    <Button variant="soft" onClick={() => setManageDeck(deck)}>
+                      <Layers size={15} />
                     </Button>
                     <Button variant="soft" onClick={() => setAddCardDeck(deck)}>
                       <Plus size={15} />
@@ -113,7 +144,165 @@ export default function Flashcards() {
 
       <AddDeckModal open={addDeckOpen} onClose={() => setAddDeckOpen(false)} subjects={subjects} onAdd={(d) => setDecks((prev) => [...prev, d])} />
       <AddCardModal deck={addCardDeck} onClose={() => setAddCardDeck(null)} onAdd={(c) => { setFlashcards((prev) => [...prev, c]); toast({ emoji: "➕", title: "เพิ่มการ์ดแล้ว" }); }} />
+      <EditDeckModal
+        deck={editDeck}
+        subjects={subjects}
+        onClose={() => setEditDeck(null)}
+        onSave={(patch) => { if (editDeck) setDecks((prev) => prev.map((d) => (d.id === editDeck.id ? { ...d, ...patch } : d))); setEditDeck(null); }}
+      />
     </div>
+  );
+}
+
+function ManageCards({
+  deck,
+  cards,
+  onExit,
+  onAdd,
+  onUpdate,
+  onDelete,
+}: {
+  deck: Deck;
+  cards: Flashcard[];
+  onExit: () => void;
+  onAdd: (c: Flashcard) => void;
+  onUpdate: (id: string, front: string, back: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [editing, setEditing] = useState<{ id: string; front: string; back: string } | null>(null);
+  const [newFront, setNewFront] = useState("");
+  const [newBack, setNewBack] = useState("");
+
+  const addCard = () => {
+    if (!newFront.trim() || !newBack.trim()) return;
+    onAdd({ id: uid(), deckId: deck.id, front: newFront.trim(), back: newBack.trim(), ease: 2.5, interval: 0, reps: 0, due: todayISO(), createdAt: Date.now() });
+    setNewFront(""); setNewBack("");
+  };
+
+  const saveEdit = () => {
+    if (!editing || !editing.front.trim() || !editing.back.trim()) return;
+    onUpdate(editing.id, editing.front.trim(), editing.back.trim());
+    setEditing(null);
+  };
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-5">
+      <div className="flex items-center justify-between">
+        <button onClick={onExit} className="flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-fg">
+          <ArrowLeft size={16} /> กลับ
+        </button>
+        <Badge color={deck.color}>{deck.name}</Badge>
+        <span className="text-sm font-semibold text-muted">{cards.length} การ์ด</span>
+      </div>
+
+      {/* เพิ่มการ์ดใหม่ */}
+      <div className="glass rounded-2xl p-4 space-y-3">
+        <p className="text-sm font-bold text-fg">เพิ่มการ์ดใหม่</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <input className={inputCls} value={newFront} onChange={(e) => setNewFront(e.target.value)} placeholder="หน้า (คำถาม)" onKeyDown={(e) => e.key === "Enter" && addCard()} />
+          <input className={inputCls} value={newBack} onChange={(e) => setNewBack(e.target.value)} placeholder="หลัง (คำตอบ)" onKeyDown={(e) => e.key === "Enter" && addCard()} />
+        </div>
+        <div className="flex justify-end">
+          <Button size="sm" onClick={addCard}><Plus size={15} /> เพิ่ม</Button>
+        </div>
+      </div>
+
+      {/* รายการการ์ด */}
+      <div className="space-y-2">
+        <AnimatePresence initial={false}>
+          {cards.map((c) => (
+            <motion.div key={c.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -16 }} className="glass rounded-2xl p-3.5">
+              {editing?.id === c.id ? (
+                <div className="space-y-2">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <input className={inputCls} value={editing.front} onChange={(e) => setEditing({ ...editing, front: e.target.value })} placeholder="หน้า" autoFocus />
+                    <input className={inputCls} value={editing.back} onChange={(e) => setEditing({ ...editing, back: e.target.value })} placeholder="หลัง" />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>ยกเลิก</Button>
+                    <Button size="sm" onClick={saveEdit}>บันทึก</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-fg">{c.front}</p>
+                    <p className="truncate text-sm text-muted">{c.back}</p>
+                  </div>
+                  <button onClick={() => setEditing({ id: c.id, front: c.front, back: c.back })} aria-label="แก้ไข" className="rounded-lg p-1.5 text-muted hover:bg-brand/15 hover:text-brand"><Pencil size={15} /></button>
+                  <button onClick={() => onDelete(c.id)} aria-label="ลบ" className="rounded-lg p-1.5 text-muted hover:bg-rose-500/15 hover:text-rose-500"><Trash2 size={15} /></button>
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        {cards.length === 0 && (
+          <div className="rounded-3xl border-2 border-dashed border-line py-12 text-center">
+            <p className="text-3xl">🗂️</p>
+            <p className="mt-2 font-semibold text-muted">ยังไม่มีการ์ดในสำรับนี้</p>
+            <p className="text-sm text-muted/70">เพิ่มการ์ดด้านบนเพื่อเริ่มทบทวน</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EditDeckModal({
+  deck,
+  subjects,
+  onClose,
+  onSave,
+}: {
+  deck: Deck | null;
+  subjects: string[];
+  onClose: () => void;
+  onSave: (patch: { name: string; subject: string; color: string }) => void;
+}) {
+  const [name, setName] = useState("");
+  const [subject, setSubject] = useState("");
+  const [color, setColor] = useState(SUBJECT_COLORS[0]);
+
+  // sync ค่าเมื่อเปิด deck ใหม่
+  const [lastId, setLastId] = useState<string | null>(null);
+  if (deck && deck.id !== lastId) {
+    setLastId(deck.id);
+    setName(deck.name);
+    setSubject(deck.subject);
+    setColor(deck.color);
+  }
+
+  function submit() {
+    if (!name.trim()) return;
+    onSave({ name: name.trim(), subject: subject.trim() || "ทั่วไป", color });
+  }
+
+  return (
+    <Modal open={!!deck} onClose={onClose} title="แก้ไขสำรับ">
+      <div className="space-y-4">
+        <div>
+          <label className={labelCls}>ชื่อสำรับ</label>
+          <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+        </div>
+        <div>
+          <label className={labelCls}>วิชา</label>
+          <input className={inputCls} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="พิมพ์หรือเลือกด้านล่าง" list="edit-deck-subjects" />
+          <datalist id="edit-deck-subjects">{subjects.map((s) => <option key={s} value={s} />)}</datalist>
+        </div>
+        <div>
+          <label className={labelCls}>สี</label>
+          <div className="flex flex-wrap gap-2">
+            {SUBJECT_COLORS.map((c) => (
+              <button key={c} onClick={() => setColor(c)} className={`h-8 w-8 rounded-full transition ${color === c ? "ring-2 ring-offset-2 ring-offset-surface" : ""}`} style={{ background: c, boxShadow: color === c ? `0 0 0 2px ${c}` : "none" }} />
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="ghost" onClick={onClose}>ยกเลิก</Button>
+          <Button onClick={submit}>บันทึก</Button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

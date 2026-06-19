@@ -13,7 +13,10 @@ export interface ClassSession {
   room: string;
   teacher: string;
   color: string; // hex เช่น "#6366f1"
+  book?: string; // ชื่อหนังสือเรียน (optional)
 }
+
+export type StudentLevel = "pratom1" | "pratom2" | "matayom1" | "matayom2" | "uni";
 
 /** งานส่ง / การบ้าน */
 export interface Assignment {

@@ -67,10 +67,17 @@ export default function Dashboard() {
   );
 
   const dueCards = useMemo(() => flashcards.filter((c) => isDue(c, today)).length, [flashcards, today]);
-  const upcomingExams = useMemo(
-    () => exams.filter((e) => daysFromToday(e.date) >= 0).sort((a, b) => a.date.localeCompare(b.date)),
-    [exams],
-  );
+  const upcomingExams = useMemo(() => {
+    let gcal: typeof exams = [];
+    try { gcal = JSON.parse(localStorage.getItem("sh:gcal_events") ?? "[]"); } catch { /* ignore */ }
+    return [...exams, ...gcal]
+      .filter((e) => daysFromToday(e.date) >= 0)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [exams]);
+
+  // กิจกรรมจาก Google Calendar แสดงสีเขียว (ให้ตรงกับหน้าปฏิทิน)
+  const eventColor = (e: { id: string; subject: string }) =>
+    e.id.startsWith("gcal_") ? "#10b981" : colorOf(e.subject);
   const gpa = useMemo(() => computeGPA(grades), [grades]);
 
   // โฟกัส 7 วันล่าสุด (กราฟแท่งเล็ก)
@@ -274,14 +281,14 @@ export default function Dashboard() {
           </Card>
 
           <Card>
-            <h2 className="mb-3 flex items-center gap-2 font-bold text-fg"><CalendarClock size={18} className="text-brand" /> การสอบที่จะถึง</h2>
+            <h2 className="mb-3 flex items-center gap-2 font-bold text-fg"><CalendarClock size={18} className="text-brand" /> กิจกรรม/นัดหมาย</h2>
             {upcomingExams.length === 0 ? (
-              <p className="rounded-2xl bg-surface2 py-6 text-center text-sm text-muted">ยังไม่มีตารางสอบ</p>
+              <p className="rounded-2xl bg-surface2 py-6 text-center text-sm text-muted">ยังไม่มีกิจกรรม</p>
             ) : (
               <div className="space-y-2">
                 {upcomingExams.slice(0, 2).map((e) => (
                   <div key={e.id} className="flex items-center gap-3 rounded-2xl bg-surface2/70 p-3">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-bold" style={{ backgroundColor: colorOf(e.subject) + "22", color: colorOf(e.subject) }}>
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-bold" style={{ backgroundColor: eventColor(e) + "22", color: eventColor(e) }}>
                       {daysFromToday(e.date)}ว
                     </span>
                     <div className="min-w-0 flex-1">

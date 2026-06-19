@@ -4,6 +4,7 @@ import { VOCAB, type VocabCategory, type GameDifficulty } from "../../data/gameC
 import { Button } from "../ui";
 import { playCorrect, playWrong, playComplete, shuffle } from "./gameUtils";
 import { triggerCelebration } from "./CelebrationEffects";
+import EmptyPool from "./EmptyPool";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const MAX_WRONG = 6;
@@ -80,6 +81,8 @@ export default function Hangman({ category, difficulty, onComplete }: Props) {
     else playWrong();
   };
 
+  if (poolRef.length === 0) return <EmptyPool onComplete={onComplete} />;
+
   return (
     <div className="flex flex-col items-center gap-4 text-fg">
       {/* Header */}
@@ -116,7 +119,7 @@ export default function Hangman({ category, difficulty, onComplete }: Props) {
       </p>
 
       {/* Keyboard */}
-      <div className="flex flex-wrap justify-center gap-1.5 max-w-xs">
+      <div className="flex flex-wrap justify-center gap-2 max-w-sm">
         {ALPHABET.map((l) => {
           const isGuessed = guessed.has(l);
           const isCorrect = isGuessed && word.includes(l);
@@ -124,15 +127,15 @@ export default function Hangman({ category, difficulty, onComplete }: Props) {
           return (
             <motion.button
               key={l}
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.85 }}
               onClick={() => guess(l)}
               disabled={isGuessed || over}
-              className={`h-8 w-8 rounded-lg text-xs font-bold transition ${
+              className={`h-11 w-11 rounded-xl text-sm font-bold transition select-none ${
                 isCorrect
                   ? "bg-emerald-500 text-white"
                   : isWrong
-                  ? "bg-red-400/20 text-red-400 line-through"
-                  : "bg-surface2 text-fg hover:bg-brand hover:text-white disabled:opacity-40"
+                  ? "bg-red-400/20 text-red-400 line-through opacity-50"
+                  : "bg-surface2 text-fg hover:bg-brand hover:text-white active:scale-90 disabled:opacity-30"
               }`}
             >
               {l}

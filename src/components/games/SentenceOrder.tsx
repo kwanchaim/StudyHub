@@ -4,8 +4,9 @@ import { SENTENCES, type GameDifficulty } from "../../data/gameContent";
 import { Button } from "../ui";
 import { playWrong, playComplete, pickRandom, shuffle } from "./gameUtils";
 import { triggerCelebration } from "./CelebrationEffects";
+import EmptyPool from "./EmptyPool";
 
-const TOTAL = 5;
+const DESIRED = 5;
 
 interface Props {
   difficulty: GameDifficulty;
@@ -13,7 +14,8 @@ interface Props {
 }
 
 export default function SentenceOrder({ difficulty, onComplete }: Props) {
-  const [pool] = useState(() => pickRandom(SENTENCES.filter((s) => s.difficulty === difficulty), TOTAL));
+  const [pool] = useState(() => pickRandom(SENTENCES.filter((s) => s.difficulty === difficulty), DESIRED));
+  const TOTAL = pool.length;
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
   const [phase, setPhase] = useState<"playing" | "correct" | "wrong">("playing");
@@ -70,6 +72,7 @@ export default function SentenceOrder({ difficulty, onComplete }: Props) {
     resetRound(next);
   };
 
+  if (TOTAL === 0) return <EmptyPool onComplete={onComplete} />;
   if (!current) return null;
 
   return (
