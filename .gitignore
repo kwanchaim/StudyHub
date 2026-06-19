@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+dist-ssr/
+
+# Android build artifacts (ใหญ่มาก — ไม่ต้อง commit)
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/*.iml
+android/captures/
+
+# Capacitor generated (re-generated จาก npx cap sync)
+android/app/src/main/assets/public/
+android/app/src/main/res/xml/config.xml
+
+# Logs
+*.log
+logs/
+dev-server.log
+build-v2.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables — อย่า commit ความลับ!
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# OS
+.DS_Store
+desktop.ini
+
+# NOTE: StudyHub-v3.apk เก็บไว้ใน repo เพื่อให้ดาวน์โหลดได้ (ไม่ถูก ignore)
