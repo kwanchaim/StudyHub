@@ -92,16 +92,19 @@ async function fetchIcsText(url: string): Promise<string> {
     if (res.status < 200 || res.status >= 300) throw new Error("HTTP_" + res.status);
     return typeof res.data === "string" ? res.data : JSON.stringify(res.data);
   }
-  // Web browser: try direct fetch first, then CORS proxy as fallback
+  // Web browser: Google blocks CORS. Use our OWN same-origin proxy — the dev/preview
+  // server on THIS computer fetches from Google server-side (no CORS, ลิงก์ลับไม่ผ่านบุคคลที่สาม)
   try {
     const r = await fetch(url);
     if (r.ok) return r.text();
-  } catch { /* CORS/network — fall through to proxy */ }
+  } catch { /* CORS — try same-origin proxy */ }
   try {
-    const proxied = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
-    const r2 = await fetch(proxied);
-    if (r2.ok) return r2.text();
-  } catch { /* proxy also failed */ }
+    const m = url.match(/^https?://calendar.google.com/(.*)$/i);
+    if (m) {
+      const r2 = await fetch("/gcal-proxy/" + m[1]);
+      if (r2.ok) return r2.text();
+    }
+  } catch { /* proxy path failed */ }
   throw new Error("CORS_BLOCK");
 }
 
