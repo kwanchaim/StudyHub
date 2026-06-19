@@ -112,6 +112,14 @@ export default function Dashboard() {
       <Card className="relative overflow-hidden">
         <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-brand/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-12 right-24 h-40 w-40 rounded-full bg-brand2/20 blur-3xl" />
+        {/* ไอคอนสำรองข้อมูล — มุมขวาบน */}
+        <button
+          onClick={() => goTo("backup")}
+          title="สำรอง / กู้คืนข้อมูล"
+          className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-xl bg-surface2/70 text-muted backdrop-blur-sm transition hover:bg-brand/15 hover:text-brand"
+        >
+          <HardDrive size={17} />
+        </button>
         <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="flex items-center gap-2 text-sm font-semibold text-brand">
