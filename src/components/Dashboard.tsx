@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Clock,
   Flame,
+  HardDrive,
   ListTodo,
   Sparkles,
   Timer,
@@ -75,12 +76,10 @@ export default function Dashboard() {
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [exams]);
 
-  // กิจกรรมจาก Google Calendar แสดงสีเขียว (ให้ตรงกับหน้าปฏิทิน)
   const eventColor = (e: { id: string; subject: string }) =>
     e.id.startsWith("gcal_") ? "#10b981" : colorOf(e.subject);
   const gpa = useMemo(() => computeGPA(grades), [grades]);
 
-  // โฟกัส 7 วันล่าสุด (กราฟแท่งเล็ก)
   const focus7 = useMemo(() => {
     const out: { label: string; minutes: number; isToday: boolean }[] = [];
     for (let i = 6; i >= 0; i--) {
@@ -98,12 +97,13 @@ export default function Dashboard() {
   }, [focusLogs, today]);
   const maxFocus = Math.max(60, ...focus7.map((d) => d.minutes));
   const todayFocus = focus7[focus7.length - 1]?.minutes ?? 0;
+  const totalFocusMin = focus7.reduce((s, d) => s + d.minutes, 0);
 
   const stats = [
-    { icon: Clock, label: "คาบเรียนวันนี้", value: todayClasses.length, tone: "#6366f1", go: "schedule" as const },
-    { icon: ListTodo, label: "งานค้างส่ง", value: pendingTasks.length, tone: "#ec4899", go: "assignments" as const },
-    { icon: Brain, label: "การ์ดรอทบทวน", value: dueCards, tone: "#22d3ee", go: "flashcards" as const },
-    { icon: TrendingUp, label: "GPA สะสม", value: gpa.gpa.toFixed(2), tone: "#10b981", go: "grades" as const },
+    { icon: Clock,      label: "คาบเรียนวันนี้",  value: todayClasses.length,   tone: "#6366f1", go: "schedule"    as const },
+    { icon: ListTodo,   label: "งานค้างส่ง",       value: pendingTasks.length,   tone: "#ec4899", go: "assignments" as const },
+    { icon: Brain,      label: "การ์ดรอทบทวน",    value: dueCards,              tone: "#22d3ee", go: "flashcards"  as const },
+    { icon: TrendingUp, label: "GPA สะสม",         value: gpa.gpa.toFixed(2),    tone: "#10b981", go: "grades"      as const },
   ];
 
   return (
@@ -121,7 +121,7 @@ export default function Dashboard() {
               {greeting()} 👋 <span className="text-gradient">{info.title}</span>
             </h1>
             <p className="mt-2 max-w-md text-sm text-muted">
-              “{quote.text}” <span className="text-muted/70">— {quote.author}</span>
+              "{quote.text}" <span className="text-muted/70">— {quote.author}</span>
             </p>
           </div>
           <div className="shrink-0">
@@ -140,7 +140,7 @@ export default function Dashboard() {
         </div>
       </Card>
 
-      {/* ── Stat tiles ── */}
+      {/* ── Stat tiles — คลิกได้ทุกไทล์ ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s, i) => {
           const Icon = s.icon;
@@ -168,13 +168,8 @@ export default function Dashboard() {
       {/* ── เกมการเรียน shortcuts ── */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-base font-extrabold text-fg">
-            🎮 เกมการเรียน
-          </h2>
-          <button
-            onClick={() => goTo("games")}
-            className="flex items-center gap-0.5 text-xs font-semibold text-brand hover:underline"
-          >
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-fg">🎮 เกมการเรียน</h2>
+          <button onClick={() => goTo("games")} className="flex items-center gap-0.5 text-xs font-semibold text-brand hover:underline">
             ดูทั้งหมด <ChevronRight size={13} />
           </button>
         </div>
@@ -206,11 +201,18 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        {/* คาบเรียนวันนี้ */}
-        <Card className="lg:col-span-3">
+        {/* ── คาบเรียนวันนี้ — คลิกทั้งการ์ดไปหน้าตาราง ── */}
+        <Card
+          className="lg:col-span-3 cursor-pointer transition hover:brightness-[1.03]"
+          onClick={() => goTo("schedule")}
+        >
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-bold text-fg"><BookOpen size={18} className="text-brand" /> คาบเรียนวันนี้</h2>
-            <button onClick={() => goTo("schedule")} className="text-xs font-semibold text-brand hover:underline">ดูตาราง</button>
+            <h2 className="flex items-center gap-2 font-bold text-fg">
+              <BookOpen size={18} className="text-brand" /> คาบเรียนวันนี้
+            </h2>
+            <span className="flex items-center gap-0.5 text-xs font-semibold text-brand">
+              ดูตาราง <ChevronRight size={13} />
+            </span>
           </div>
           {todayClasses.length === 0 ? (
             <p className="rounded-2xl bg-surface2 py-8 text-center text-sm text-muted">วันนี้ไม่มีคาบเรียน พักผ่อนหรือทบทวนได้เต็มที่ 🎉</p>
@@ -229,11 +231,18 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* กราฟโฟกัส 7 วัน */}
+          {/* กราฟโฟกัส 7 วัน — คลิกปุ่มนาทีไปหน้าโฟกัส (หยุด propagate ขึ้นการ์ด) */}
           <div className="mt-5 rounded-2xl bg-surface2/60 p-4">
             <div className="mb-3 flex items-center justify-between">
-              <p className="flex items-center gap-1.5 text-sm font-semibold text-fg"><Timer size={15} className="text-brand" /> เวลาโฟกัส 7 วันล่าสุด</p>
-              <span className="text-xs text-muted">รวม {focus7.reduce((s, d) => s + d.minutes, 0)} นาที</span>
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-fg">
+                <Timer size={15} className="text-brand" /> เวลาโฟกัส 7 วันล่าสุด
+              </p>
+              <button
+                onClick={(e) => { e.stopPropagation(); goTo("focus"); }}
+                className="flex items-center gap-0.5 text-xs font-semibold text-brand hover:underline"
+              >
+                {totalFocusMin} นาที <ChevronRight size={12} />
+              </button>
             </div>
             <div className="flex h-24 items-end justify-between gap-2">
               {focus7.map((d, i) => (
@@ -252,12 +261,21 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* งานใกล้ครบกำหนด + สอบ */}
+        {/* ── งาน + สอบ/นัดหมาย ── */}
         <div className="space-y-6 lg:col-span-2">
-          <Card>
+
+          {/* งานใกล้ครบกำหนด — คลิกทั้งการ์ดไปหน้างาน */}
+          <Card
+            className="cursor-pointer transition hover:brightness-[1.03]"
+            onClick={() => goTo("assignments")}
+          >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 font-bold text-fg"><ListTodo size={18} className="text-brand" /> งานใกล้ครบกำหนด</h2>
-              <button onClick={() => goTo("assignments")} className="text-xs font-semibold text-brand hover:underline">ทั้งหมด</button>
+              <h2 className="flex items-center gap-2 font-bold text-fg">
+                <ListTodo size={18} className="text-brand" /> งานใกล้ครบกำหนด
+              </h2>
+              <span className="flex items-center gap-0.5 text-xs font-semibold text-brand">
+                ทั้งหมด <ChevronRight size={13} />
+              </span>
             </div>
             {pendingTasks.length === 0 ? (
               <p className="rounded-2xl bg-surface2 py-6 text-center text-sm text-muted">ไม่มีงานค้าง สุดยอด! ✨</p>
@@ -280,8 +298,19 @@ export default function Dashboard() {
             )}
           </Card>
 
-          <Card>
-            <h2 className="mb-3 flex items-center gap-2 font-bold text-fg"><CalendarClock size={18} className="text-brand" /> กิจกรรม/นัดหมาย</h2>
+          {/* กิจกรรม/นัดหมาย — คลิกทั้งการ์ดไปหน้าปฏิทิน */}
+          <Card
+            className="cursor-pointer transition hover:brightness-[1.03]"
+            onClick={() => goTo("exams")}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 font-bold text-fg">
+                <CalendarClock size={18} className="text-brand" /> กิจกรรม/นัดหมาย
+              </h2>
+              <span className="flex items-center gap-0.5 text-xs font-semibold text-brand">
+                ดูทั้งหมด <ChevronRight size={13} />
+              </span>
+            </div>
             {upcomingExams.length === 0 ? (
               <p className="rounded-2xl bg-surface2 py-6 text-center text-sm text-muted">ยังไม่มีกิจกรรม</p>
             ) : (

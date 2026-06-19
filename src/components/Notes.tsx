@@ -65,9 +65,6 @@ export default function Notes() {
     [notes, activeSubject],
   );
 
-  // มีโน้ตที่ subject ว่างหรือไม่ (สำหรับ chip "ไม่ระบุวิชา")
-  const hasNoSubjectNotes = notes.some((n) => !n.subject);
-
   // subject เริ่มต้นสำหรับ modal (ไม่ให้ว่าง)
   const defaultSubject = selectOptions[0] ?? "ทั่วไป";
 

@@ -1,7 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    
+
     repositories {
         google()
         mavenCentral()
@@ -21,6 +21,11 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+    // Force bcprov-jdk18on to 1.78 — version 1.79 contains Java-21 multi-release bytecode
+    // that Gradle 8.2.1's classpath instrumentation cannot process.
+    configurations.all {
+        resolutionStrategy.force 'org.bouncycastle:bcprov-jdk18on:1.78'
     }
 }
 

@@ -118,4 +118,5 @@ export type TabKey =
   | "analytics"
   | "notes"
   | "checklist"
-  | "games";
+  | "games"
+  | "backup";

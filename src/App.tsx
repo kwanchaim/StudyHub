@@ -14,6 +14,7 @@ import {
   Menu,
   Moon,
   NotebookPen,
+  HardDrive,
   Sun,
   Timer,
   Trophy,
@@ -37,6 +38,7 @@ import Analytics from "./components/Analytics";
 import Notes from "./components/Notes";
 import Checklist from "./components/Checklist";
 import Games from "./components/Games";
+import Backup from "./components/Backup";
 
 interface NavItem {
   key: TabKey;
@@ -57,6 +59,7 @@ const NAV: NavItem[] = [
   { key: "grades", label: "เกรด & GPA", icon: Trophy, group: "ก้าวหน้า" },
   { key: "checklist", label: "เช็กลิสต์", icon: CheckSquare, group: "ก้าวหน้า" },
   { key: "games", label: "เกมการเรียน", icon: Gamepad2, group: "สนุก" },
+  { key: "backup", label: "สำรอง/กู้คืน", icon: HardDrive, group: "ระบบ" },
 ];
 
 const PAGES: Record<TabKey, ComponentType> = {
@@ -71,6 +74,7 @@ const PAGES: Record<TabKey, ComponentType> = {
   notes: Notes,
   checklist: Checklist,
   games: Games,
+  backup: Backup,
 };
 
 const MOBILE_PRIMARY: TabKey[] = ["dashboard", "assignments", "focus", "flashcards"];
@@ -114,7 +118,7 @@ export default function App() {
         <Brand />
         <PlayerCard />
         <nav className="-mr-2 flex flex-1 flex-col gap-4 overflow-y-auto pr-2">
-          {["หลัก", "ทบทวน", "ก้าวหน้า", "สนุก"].map((group) => (
+          {["หลัก", "ทบทวน", "ก้าวหน้า", "สนุก", "ระบบ"].map((group) => (
             <div key={group}>
               <p className="mb-1.5 px-3 text-[11px] font-bold uppercase tracking-wider text-muted/60">{group}</p>
               <div className="flex flex-col gap-0.5">
@@ -199,11 +203,14 @@ export default function App() {
           );
         })}
         <button
-          onClick={() => setPaletteOpen(true)}
-          className="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold text-muted"
+          key="backup"
+          onClick={() => setTab("backup")}
+          className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition ${
+            tab === "backup" ? "text-brand" : "text-muted"
+          }`}
         >
-          <Menu size={20} />
-          <span>เมนู</span>
+          <HardDrive size={20} />
+          <span>สำรองข้อมูล</span>
         </button>
       </nav>
 
