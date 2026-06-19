@@ -153,7 +153,7 @@ export default function Schedule() {
             .sort((a, b) => a.start.localeCompare(b.start));
           const isToday = day === td;
           return (
-            <div key={day} className={`glass rounded-3xl p-3 ${isToday ? "ring-2 ring-brand/50" : ""}`}>
+            <div key={day} className={`glass rounded-3xl p-3 transition-shadow ${isToday ? "ring-2 ring-brand/55 shadow-lg shadow-brand/15" : ""}`}>
               <div className="mb-2 flex items-center justify-between px-1">
                 <p className={`text-sm font-bold ${isToday ? "text-brand" : "text-fg"}`}>{WEEKDAYS_FULL[day]}</p>
                 {isToday && <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-bold text-brand">วันนี้</span>}
@@ -166,8 +166,8 @@ export default function Schedule() {
                     layout
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="group relative rounded-2xl p-3"
-                    style={{ backgroundColor: s.color + "1f" }}
+                    className="group relative rounded-2xl p-3 transition-colors hover:brightness-[1.06]"
+                    style={{ backgroundColor: s.color + "1e" }}
                   >
                     <p className="pr-12 text-sm font-bold text-fg">{s.subject}</p>
                     <p className="text-xs font-semibold" style={{ color: s.color }}>{s.start}–{s.end}</p>

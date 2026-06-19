@@ -702,7 +702,7 @@ export default function Exams() {
           })}
         </AnimatePresence>
         {listed.length === 0 && (
-          <p className="rounded-2xl border-2 border-dashed border-line py-10 text-center text-sm text-muted">
+          <p className="animate-in rounded-2xl border-2 border-dashed border-line/60 py-10 text-center text-sm text-muted/75">
             ไม่มีกิจกรรม{selected ? "ในวันที่เลือก" : "ที่จะถึง"}
           </p>
         )}

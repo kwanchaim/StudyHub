@@ -114,13 +114,13 @@ export default function App() {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       {/* ── Sidebar (เดสก์ท็อป) ── */}
-      <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col gap-5 border-r border-line bg-surface/40 px-4 py-6 backdrop-blur-xl lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col gap-5 border-r border-line/60 bg-surface/50 px-4 py-6 backdrop-blur-2xl lg:flex">
         <Brand />
         <PlayerCard />
         <nav className="-mr-2 flex flex-1 flex-col gap-4 overflow-y-auto pr-2">
           {["หลัก", "ทบทวน", "ก้าวหน้า", "สนุก", "ระบบ"].map((group) => (
             <div key={group}>
-              <p className="mb-1.5 px-3 text-[11px] font-bold uppercase tracking-wider text-muted/60">{group}</p>
+              <p className="mb-1.5 px-3 text-[10px] font-black uppercase tracking-widest text-muted/70">{group}</p>
               <div className="flex flex-col gap-0.5">
                 {NAV.filter((n) => n.group === group).map((item) => (
                   <NavButton
@@ -135,18 +135,21 @@ export default function App() {
             </div>
           ))}
         </nav>
-        <button
-          onClick={() => setPaletteOpen(true)}
-          className="flex items-center gap-2 rounded-xl border border-line bg-surface/50 px-3 py-2 text-xs font-medium text-muted transition hover:text-fg"
-        >
-          <Command size={14} />
-          ค้นหา / สั่งงานด่วน
-          <kbd className="ml-auto rounded bg-surface2 px-1.5 py-0.5 text-[10px] font-bold">Ctrl K</kbd>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPaletteOpen(true)}
+            className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-surface/50 px-3 py-2 text-xs font-medium text-muted transition hover:bg-surface2 hover:text-fg"
+          >
+            <Command size={14} className="shrink-0" />
+            <span className="truncate">ค้นหา / สั่งงานด่วน</span>
+            <kbd className="ml-auto shrink-0 rounded bg-surface2 px-1.5 py-0.5 text-[10px] font-bold">⌘K</kbd>
+          </button>
+          <ThemeToggle />
+        </div>
       </aside>
 
       {/* ── Top bar (มือถือ) ── */}
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-line bg-surface/60 px-4 py-3 backdrop-blur-xl lg:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-line/60 bg-surface/70 px-4 py-3 backdrop-blur-2xl lg:hidden">
         <Brand compact />
         <div className="flex items-center gap-1.5">
           <StreakChip />
@@ -162,15 +165,15 @@ export default function App() {
       </header>
 
       {/* ── เนื้อหา ── */}
-      <main className="flex-1 overflow-x-hidden px-4 pb-28 pt-6 sm:px-8 lg:pb-12">
+      <main className="flex-1 overflow-x-hidden px-4 pb-28 pt-6 sm:px-6 lg:pb-12 lg:pt-8">
         <div className="mx-auto max-w-6xl">
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}
-              initial={{ opacity: 0, y: 14 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             >
               <Page />
             </motion.div>
@@ -179,23 +182,29 @@ export default function App() {
       </main>
 
       {/* ── Bottom nav (มือถือ) ── */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/80 px-1 backdrop-blur-xl lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line/60 bg-surface/85 px-1 pb-safe backdrop-blur-2xl lg:hidden">
         {MOBILE_PRIMARY.map((key) => {
           const item = NAV.find((n) => n.key === key)!;
           const Icon = item.icon;
           const b = badgeFor(key);
+          const isActive = tab === key;
           return (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition ${
-                tab === key ? "text-brand" : "text-muted"
+              className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition-all duration-200 ${
+                isActive ? "text-brand" : "text-muted"
               }`}
             >
-              <Icon size={20} />
+              {isActive && (
+                <span className="nav-line-active absolute left-1/2 top-0 h-0.5 w-8 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand to-brand2" />
+              )}
+              <span className={`transition-transform duration-200 ${isActive ? "scale-110" : "scale-100"}`}>
+                <Icon size={20} />
+              </span>
               <span>{item.label}</span>
               {b && (
-                <span className="absolute right-1/2 top-1 translate-x-3 rounded-full bg-rose-500 px-1.5 text-[9px] font-bold text-white">
+                <span className="absolute right-1/2 top-1 translate-x-4 rounded-full bg-rose-500 px-1.5 text-[9px] font-bold text-white shadow">
                   {b}
                 </span>
               )}
@@ -205,11 +214,16 @@ export default function App() {
         <button
           key="backup"
           onClick={() => setTab("backup")}
-          className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition ${
+          className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition-all duration-200 ${
             tab === "backup" ? "text-brand" : "text-muted"
           }`}
         >
-          <HardDrive size={20} />
+          {tab === "backup" && (
+            <span className="nav-line-active absolute left-1/2 top-0 h-0.5 w-8 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand to-brand2" />
+          )}
+          <span className={`transition-transform duration-200 ${tab === "backup" ? "scale-110" : "scale-100"}`}>
+            <HardDrive size={20} />
+          </span>
           <span>สำรองข้อมูล</span>
         </button>
       </nav>
@@ -249,9 +263,9 @@ function PlayerCard() {
   return (
     <div className="glass rounded-2xl p-4">
       <div className="flex items-center gap-3">
-        <div className="relative grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-brand to-brand2 text-lg font-extrabold text-white shadow-lg shadow-brand/40">
+        <div className="relative grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-brand to-brand2 text-lg font-extrabold text-white shadow-lg shadow-brand/40 ring-2 ring-brand/25 ring-offset-1 ring-offset-surface">
           {info.level}
-          <span className="absolute -bottom-1 -right-1 rounded-full bg-surface px-1.5 text-[9px] font-bold text-brand shadow">LV</span>
+          <span className="absolute -bottom-1 -right-1 rounded-full bg-gradient-to-r from-brand to-brand2 px-1.5 py-0.5 text-[8px] font-black text-white shadow">LV</span>
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between">

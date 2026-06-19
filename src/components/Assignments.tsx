@@ -150,7 +150,7 @@ export default function Assignments() {
           })}
         </AnimatePresence>
         {filtered.length === 0 && (
-          <div className="rounded-3xl border-2 border-dashed border-line py-16 text-center">
+          <div className="animate-in rounded-3xl border-2 border-dashed border-line/60 py-16 text-center">
             <p className="text-4xl">🎯</p>
             <p className="mt-2 font-semibold text-muted">{filter === "done" ? "ยังไม่มีงานที่ทำเสร็จ" : "ไม่มีงานค้าง เยี่ยมมาก!"}</p>
           </div>

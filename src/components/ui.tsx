@@ -4,9 +4,9 @@ import { X } from "lucide-react";
 
 /** สไตล์ input / label ที่รองรับธีมมืด-สว่าง */
 export const inputCls =
-  "w-full rounded-xl border border-line bg-surface2 px-3.5 py-2.5 text-sm text-fg outline-none transition placeholder:text-muted/60 focus:border-brand focus:ring-4 focus:ring-brand/15";
+  "w-full rounded-xl border border-line bg-surface2 px-3.5 py-2.5 text-sm text-fg outline-none transition-all duration-200 placeholder:text-muted/60 focus:border-brand focus:ring-4 focus:ring-brand/15 focus:bg-surface";
 
-export const labelCls = "mb-1.5 block text-sm font-medium text-muted";
+export const labelCls = "mb-1.5 block text-sm font-semibold text-muted";
 
 /** การ์ดแก้วฝ้าใช้ซ้ำ */
 export function Card({
@@ -21,7 +21,11 @@ export function Card({
   return (
     <div
       onClick={onClick}
-      className={`glass rounded-3xl p-5 shadow-xl shadow-slate-900/5 ${className}`}
+      className={`glass rounded-3xl p-5 shadow-xl shadow-slate-900/5 ${
+        onClick
+          ? "cursor-pointer transition-all duration-200 hover:brightness-[1.04] hover:-translate-y-0.5 active:scale-[0.995]"
+          : ""
+      } ${className}`}
     >
       {children}
     </div>
@@ -47,14 +51,14 @@ export function Button({
   disabled?: boolean;
 }) {
   const base =
-    "inline-flex items-center justify-center gap-1.5 rounded-xl font-semibold transition disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none";
   const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-4 py-2.5 text-sm" };
   const styles = {
     primary:
-      "bg-gradient-to-r from-brand to-brand2 text-white shadow-lg shadow-brand/30 hover:brightness-110",
-    soft: "bg-brand/12 text-brand hover:bg-brand/20",
-    ghost: "border border-line bg-surface/60 text-fg hover:bg-surface2",
-    danger: "bg-rose-500/12 text-rose-500 hover:bg-rose-500/20",
+      "bg-gradient-to-r from-brand to-brand2 text-white shadow-lg shadow-brand/30 hover:brightness-110 hover:shadow-xl hover:shadow-brand/35",
+    soft: "bg-brand/10 text-brand hover:bg-brand/18",
+    ghost: "border border-line bg-surface/60 text-fg hover:bg-surface2 hover:border-line/80",
+    danger: "bg-rose-500/10 text-rose-500 hover:bg-rose-500/18",
   };
   return (
     <motion.button
@@ -86,7 +90,7 @@ export function IconButton({
       whileTap={{ scale: 0.9 }}
       onClick={onClick}
       aria-label={label}
-      className={`grid h-9 w-9 place-items-center rounded-xl text-muted transition hover:bg-surface2 hover:text-fg ${className}`}
+      className={`grid h-9 w-9 cursor-pointer place-items-center rounded-xl text-muted transition-all duration-150 hover:bg-surface2 hover:text-fg active:scale-90 ${className}`}
     >
       {children}
     </motion.button>
@@ -136,9 +140,9 @@ export function ProgressBar({
 }) {
   const pct = Math.max(0, Math.min(1, value)) * 100;
   return (
-    <div className={`h-2 overflow-hidden rounded-full bg-surface2 ${className}`}>
+    <div className={`h-2.5 overflow-hidden rounded-full bg-surface2/80 ${className}`}>
       <motion.div
-        className={`h-full rounded-full ${gradient ? "bg-gradient-to-r from-brand to-brand2" : "bg-brand"}`}
+        className={`h-full rounded-full ${gradient ? "bg-gradient-to-r from-brand via-brand2 to-accent" : "bg-brand"}`}
         initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}
         transition={{ type: "spring", stiffness: 120, damping: 20 }}
@@ -174,7 +178,7 @@ export function Modal({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-sm"
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -215,10 +219,10 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="grid place-items-center rounded-3xl border-2 border-dashed border-line py-16 text-center">
-      <div className="mb-3 text-muted/50">{icon}</div>
+    <div className="animate-in grid place-items-center rounded-3xl border-2 border-dashed border-line/60 py-14 text-center">
+      <div className="mb-3 text-muted/40">{icon}</div>
       <p className="font-semibold text-muted">{title}</p>
-      {hint && <p className="mt-1 text-sm text-muted/70">{hint}</p>}
+      {hint && <p className="mt-1 text-sm text-muted/60">{hint}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
@@ -269,9 +273,9 @@ export function SectionHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex items-center justify-between gap-3">
-      <h2 className="flex items-center gap-2 text-lg font-extrabold text-fg sm:text-xl">
-        {icon && <span className="text-brand">{icon}</span>}
+    <div className="mb-5 flex items-center justify-between gap-3">
+      <h2 className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-fg">
+        {icon && <span>{icon}</span>}
         {title}
       </h2>
       {action}

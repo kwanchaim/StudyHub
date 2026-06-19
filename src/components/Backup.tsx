@@ -97,18 +97,18 @@ export default function Backup() {
       </div>
 
       <div className="glass rounded-3xl p-6 space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand/15 text-brand">
-            <HardDrive size={20} />
+        <div className="flex items-center gap-4">
+          <div className="grid h-13 w-13 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand to-brand2 text-white shadow-lg shadow-brand/35">
+            <HardDrive size={22} />
           </div>
           <div>
-            <p className="font-bold text-fg">สำรอง / กู้คืนข้อมูล</p>
+            <p className="text-base font-bold text-fg">สำรอง / กู้คืนข้อมูล</p>
             <p className="text-xs text-muted">รวมทุก key ออกมาเป็นไฟล์ JSON เดียว</p>
           </div>
         </div>
 
         {/* สำรอง */}
-        <div className="space-y-3 rounded-2xl border border-line bg-surface2/50 p-4">
+        <div className="space-y-3 rounded-2xl border border-line/70 bg-surface2/40 p-4">
           <p className="flex items-center gap-2 text-sm font-semibold text-fg">
             <Download size={14} className="text-brand" /> สำรองข้อมูล
           </p>
@@ -129,7 +129,7 @@ export default function Backup() {
         </div>
 
         {/* กู้คืน */}
-        <div className="space-y-3 rounded-2xl border border-line bg-surface2/50 p-4">
+        <div className="space-y-3 rounded-2xl border border-line/70 bg-surface2/40 p-4">
           <p className="flex items-center gap-2 text-sm font-semibold text-fg">
             <RotateCcw size={14} className="text-amber-500" /> กู้คืนข้อมูล
           </p>

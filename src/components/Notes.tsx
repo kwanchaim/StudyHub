@@ -209,10 +209,10 @@ export default function Notes() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="rounded-3xl border-2 border-dashed border-line py-16 text-center">
+        <div className="animate-in rounded-3xl border-2 border-dashed border-line/60 py-16 text-center">
           <p className="text-4xl">📓</p>
           <p className="mt-2 font-semibold text-muted">ยังไม่มีโน้ต</p>
-          <p className="text-sm text-muted/70">
+          <p className="mt-1 text-sm text-muted/60">
             {activeSubject ? `ไม่มีโน้ตวิชา "${activeSubject}"` : 'กด "เพิ่มโน้ต" เพื่อเริ่มจดบันทึก'}
           </p>
         </div>

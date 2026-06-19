@@ -110,8 +110,9 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* ── Hero ── */}
       <Card className="relative overflow-hidden">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-brand/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-12 right-24 h-40 w-40 rounded-full bg-brand2/20 blur-3xl" />
+        <div className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 rounded-full bg-brand/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-12 right-24 h-44 w-44 rounded-full bg-brand2/25 blur-3xl" />
+        <div className="pointer-events-none absolute -left-8 top-0 h-36 w-36 rounded-full bg-accent/15 blur-3xl" />
         {/* ไอคอนสำรองข้อมูล — มุมขวาบน */}
         <button
           onClick={() => goTo("backup")}
@@ -128,8 +129,9 @@ export default function Dashboard() {
             <h1 className="mt-1 text-2xl font-extrabold text-fg sm:text-3xl">
               {greeting()} 👋 <span className="text-gradient">{info.title}</span>
             </h1>
-            <p className="mt-2 max-w-md text-sm text-muted">
-              "{quote.text}" <span className="text-muted/70">— {quote.author}</span>
+            <p className="mt-2 max-w-md text-sm italic leading-relaxed text-muted/90">
+              "{quote.text}"
+              <span className="ml-2 not-italic text-xs text-muted/55">— {quote.author}</span>
             </p>
           </div>
           <div className="shrink-0">
@@ -163,11 +165,14 @@ export default function Dashboard() {
               transition={{ delay: i * 0.05 }}
               className="glass rounded-3xl p-4 text-left shadow-lg shadow-slate-900/5"
             >
-              <span className="grid h-10 w-10 place-items-center rounded-2xl" style={{ backgroundColor: s.tone + "22", color: s.tone }}>
-                <Icon size={20} />
+              <span
+                className="grid h-11 w-11 place-items-center rounded-2xl shadow-md"
+                style={{ backgroundColor: s.tone + "22", color: s.tone, boxShadow: `0 4px 14px ${s.tone}28` }}
+              >
+                <Icon size={21} />
               </span>
-              <p className="mt-3 text-2xl font-extrabold text-fg">{s.value}</p>
-              <p className="text-xs font-medium text-muted">{s.label}</p>
+              <p className="mt-3 text-2xl font-black text-fg">{s.value}</p>
+              <p className="text-xs font-semibold text-muted">{s.label}</p>
             </motion.button>
           );
         })}
@@ -176,8 +181,8 @@ export default function Dashboard() {
       {/* ── เกมการเรียน shortcuts ── */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-base font-extrabold text-fg">🎮 เกมการเรียน</h2>
-          <button onClick={() => goTo("games")} className="flex items-center gap-0.5 text-xs font-semibold text-brand hover:underline">
+          <h2 className="flex items-center gap-2 font-extrabold text-fg">🎮 เกมการเรียน</h2>
+          <button onClick={() => goTo("games")} className="flex items-center gap-0.5 text-xs font-semibold text-brand transition hover:underline">
             ดูทั้งหมด <ChevronRight size={13} />
           </button>
         </div>
@@ -186,17 +191,17 @@ export default function Dashboard() {
             <motion.button
               key={g.id}
               onClick={() => goToGame(g.id)}
-              whileHover={{ y: -3, scale: 1.04 }}
-              whileTap={{ scale: 0.94 }}
+              whileHover={{ y: -4, scale: 1.05 }}
+              whileTap={{ scale: 0.93 }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04, type: "spring", stiffness: 200, damping: 18 }}
-              className="flex flex-col items-center gap-1.5 rounded-2xl p-2.5 text-center transition"
-              style={{ background: g.color + "18" }}
+              className="flex flex-col items-center gap-1.5 rounded-2xl p-2.5 text-center transition-colors duration-150"
+              style={{ background: g.color + "15" }}
             >
               <span
-                className="grid h-10 w-10 place-items-center rounded-xl text-xl shadow-sm"
-                style={{ background: g.color + "30", boxShadow: `0 2px 8px ${g.color}30` }}
+                className="grid h-10 w-10 place-items-center rounded-xl text-xl"
+                style={{ background: g.color + "28", boxShadow: `0 3px 10px ${g.color}35` }}
               >
                 {g.emoji}
               </span>
@@ -223,11 +228,11 @@ export default function Dashboard() {
             </span>
           </div>
           {todayClasses.length === 0 ? (
-            <p className="rounded-2xl bg-surface2 py-8 text-center text-sm text-muted">วันนี้ไม่มีคาบเรียน พักผ่อนหรือทบทวนได้เต็มที่ 🎉</p>
+            <p className="rounded-2xl bg-surface2/60 py-8 text-center text-sm text-muted/80">วันนี้ไม่มีคาบเรียน พักผ่อนหรือทบทวนได้เต็มที่ 🎉</p>
           ) : (
             <div className="space-y-2">
               {todayClasses.map((c) => (
-                <div key={c.id} className="flex items-center gap-3 rounded-2xl bg-surface2/70 p-3">
+                <div key={c.id} className="flex items-center gap-3 rounded-2xl bg-surface2/60 p-3 transition-colors hover:bg-surface2/90">
                   <span className="h-10 w-1.5 rounded-full" style={{ backgroundColor: c.color }} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-fg">{c.subject}</p>
@@ -252,17 +257,21 @@ export default function Dashboard() {
                 {totalFocusMin} นาที <ChevronRight size={12} />
               </button>
             </div>
-            <div className="flex h-24 items-end justify-between gap-2">
+            <div className="flex h-28 items-end justify-between gap-1.5">
               {focus7.map((d, i) => (
                 <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
                   <motion.div
                     initial={{ height: 0 }}
                     animate={{ height: `${(d.minutes / maxFocus) * 100}%` }}
                     transition={{ delay: i * 0.04, type: "spring", stiffness: 120, damping: 18 }}
-                    className={`w-full rounded-lg ${d.isToday ? "bg-gradient-to-t from-brand to-brand2" : "bg-brand/30"}`}
+                    className={`w-full rounded-lg ${
+                      d.isToday
+                        ? "bg-gradient-to-t from-brand to-brand2 shadow-md shadow-brand/30"
+                        : "bg-brand/22"
+                    }`}
                     style={{ minHeight: d.minutes > 0 ? 6 : 2 }}
                   />
-                  <span className={`text-[10px] ${d.isToday ? "font-bold text-brand" : "text-muted"}`}>{d.label}</span>
+                  <span className={`text-[10px] ${d.isToday ? "font-bold text-brand" : "text-muted/65"}`}>{d.label}</span>
                 </div>
               ))}
             </div>
@@ -286,14 +295,14 @@ export default function Dashboard() {
               </span>
             </div>
             {pendingTasks.length === 0 ? (
-              <p className="rounded-2xl bg-surface2 py-6 text-center text-sm text-muted">ไม่มีงานค้าง สุดยอด! ✨</p>
+              <p className="rounded-2xl bg-surface2/60 py-6 text-center text-sm text-muted/80">ไม่มีงานค้าง สุดยอด! ✨</p>
             ) : (
               <div className="space-y-2">
                 {pendingTasks.slice(0, 3).map((a) => {
                   const d = daysFromToday(a.due);
                   const tone = d < 0 ? "text-rose-500" : d <= 2 ? "text-amber-500" : "text-muted";
                   return (
-                    <div key={a.id} className="rounded-2xl bg-surface2/70 p-3">
+                    <div key={a.id} className="rounded-2xl bg-surface2/60 p-3 transition-colors hover:bg-surface2/90">
                       <p className="truncate text-sm font-semibold text-fg">{a.title}</p>
                       <div className="mt-1 flex items-center justify-between">
                         <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: colorOf(a.subject) + "22", color: colorOf(a.subject) }}>{a.subject}</span>
@@ -320,11 +329,11 @@ export default function Dashboard() {
               </span>
             </div>
             {upcomingExams.length === 0 ? (
-              <p className="rounded-2xl bg-surface2 py-6 text-center text-sm text-muted">ยังไม่มีกิจกรรม</p>
+              <p className="rounded-2xl bg-surface2/60 py-6 text-center text-sm text-muted/80">ยังไม่มีกิจกรรม</p>
             ) : (
               <div className="space-y-2">
                 {upcomingExams.slice(0, 2).map((e) => (
-                  <div key={e.id} className="flex items-center gap-3 rounded-2xl bg-surface2/70 p-3">
+                  <div key={e.id} className="flex items-center gap-3 rounded-2xl bg-surface2/60 p-3 transition-colors hover:bg-surface2/90">
                     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-bold" style={{ backgroundColor: eventColor(e) + "22", color: eventColor(e) }}>
                       {daysFromToday(e.date)}ว
                     </span>

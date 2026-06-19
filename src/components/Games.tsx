@@ -165,14 +165,19 @@ export default function Games() {
             {/* Stats */}
             <div className="mb-6 grid grid-cols-3 gap-3">
               {[
-                { icon: <Trophy size={18} />, label: "เกมที่เล่น", value: totalGamesPlayed },
-                { icon: <Star size={18} />, label: "XP จากเกม", value: totalXpFromGames },
-                { icon: <Zap size={18} />, label: "เกมทั้งหมด", value: GAMES.length },
+                { icon: <Trophy size={18} />, label: "เกมที่เล่น", value: totalGamesPlayed, tone: "#a855f7" },
+                { icon: <Star size={18} />, label: "XP จากเกม", value: totalXpFromGames, tone: "#f59e0b" },
+                { icon: <Zap size={18} />, label: "เกมทั้งหมด", value: GAMES.length, tone: "#6366f1" },
               ].map((s) => (
-                <Card key={s.label} className="flex flex-col items-center gap-1 !p-3 text-center">
-                  <span className="text-brand">{s.icon}</span>
-                  <p className="text-lg font-extrabold text-fg">{s.value}</p>
-                  <p className="text-xs text-muted">{s.label}</p>
+                <Card key={s.label} className="flex flex-col items-center gap-2 !p-4 text-center">
+                  <span
+                    className="grid h-10 w-10 place-items-center rounded-2xl"
+                    style={{ backgroundColor: s.tone + "22", color: s.tone, boxShadow: `0 4px 12px ${s.tone}28` }}
+                  >
+                    {s.icon}
+                  </span>
+                  <p className="text-lg font-black text-fg">{s.value}</p>
+                  <p className="text-xs font-semibold text-muted">{s.label}</p>
                 </Card>
               ))}
             </div>
@@ -183,9 +188,14 @@ export default function Games() {
                 const best = getBestScore(game.id, difficulty);
                 return (
                   <motion.div key={game.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                    <Card onClick={() => openSetup(game)} className="cursor-pointer hover:scale-[1.02] transition-transform duration-200 !p-4">
+                    <Card onClick={() => openSetup(game)} className="!p-4">
                       <div className="flex items-start gap-3">
-                        <span className="text-3xl">{game.emoji}</span>
+                        <span
+                          className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-2xl"
+                          style={{ background: "var(--c-surface2)" }}
+                        >
+                          {game.emoji}
+                        </span>
                         <div className="flex-1 min-w-0">
                           <p className="font-extrabold text-fg">{game.name}</p>
                           <p className="text-xs text-muted mt-0.5 line-clamp-2">{game.desc}</p>
