@@ -6,6 +6,7 @@ import { useStore } from "../store";
 import { uid } from "../storage";
 import { daysFromToday, formatThaiDate, formatThaiTime, toISODate, WEEKDAY_LETTERS } from "../lib";
 import { Button, Modal, inputCls, labelCls } from "./ui";
+import { Capacitor, CapacitorHttp } from "@capacitor/core";
 
 const MONTHS = [
   "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
@@ -73,6 +74,29 @@ function parseICS(text: string): Exam[] {
 }
 
 // ─── localStorage keys ────────────────────────────────────────────
+// fetch helpers (CORS-safe)
+function normalizeIcalUrl(raw: string): string {
+  let u = raw.trim();
+  if (u.toLowerCase().startsWith("webcal://")) u = "https://" + u.slice(9);
+  return u;
+}
+
+async function fetchIcsText(url: string): Promise<string> {
+  if (Capacitor.isNativePlatform()) {
+    const res = await CapacitorHttp.get({ url, responseType: "text" });
+    if (res.status < 200 || res.status >= 300) throw new Error("เซิร์ฟเวอร์ตอบ HTTP " + res.status);
+    return typeof res.data === "string" ? res.data : JSON.stringify(res.data);
+  }
+  try {
+    const r = await fetch(url);
+    if (r.ok) return await r.text();
+  } catch (e) { /* CORS/network */ }
+  const proxied = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+  const res = await fetch(proxied);
+  if (!res.ok) throw new Error("พร็อกซีดึงข้อมูลไม่สำเร็จ (HTTP " + res.status + ")");
+  return await res.text();
+}
+
 const GCAL_URL_KEY = "sh:gcal_url";
 const GCAL_EVENTS_KEY = "sh:gcal_events";
 const GCAL_SYNCED_KEY = "sh:gcal_synced";
@@ -106,6 +130,7 @@ export default function Exams() {
     return t ? Number(t) : null;
   });
   const [showIcalPanel, setShowIcalPanel] = useState(false);
+  const [syncError, setSyncError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const saveGcal = (events: Exam[]) => {
@@ -118,16 +143,20 @@ export default function Exams() {
   };
 
   const doSync = async () => {
-    const url = icalUrl.trim();
-    if (!url) return;
-    localStorage.setItem(GCAL_URL_KEY, url);
+    const raw = icalUrl.trim();
+    if (!raw) return;
+    localStorage.setItem(GCAL_URL_KEY, raw);
     setSyncStatus("syncing");
+    setSyncError("");
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      saveGcal(parseICS(await res.text()));
-    } catch {
+      const text = await fetchIcsText(normalizeIcalUrl(raw));
+      if (!/BEGIN:VCALENDAR/i.test(text)) {
+        throw new Error("ลิงก์นี้ไม่ใช่ปฏิทิน iCal — ตรวจว่าคัดลอกที่อยู่ลับในรูปแบบ iCal มาถูกต้อง");
+      }
+      saveGcal(parseICS(text));
+    } catch (err) {
       setSyncStatus("error");
+      setSyncError(err instanceof Error ? err.message : "ดึงปฏิทินไม่สำเร็จ");
     }
   };
 
@@ -299,7 +328,7 @@ export default function Exams() {
               )}
               {syncStatus === "error" && (
                 <p className="text-xs text-rose-500 font-semibold">
-                  ⚠ ดึงข้อมูลไม่ได้ — อาจเกิดจาก CORS บนเว็บเบราว์เซอร์ ลองนำเข้าไฟล์ .ics แทน
+                  ⚠ {syncError || "ดึงข้อมูลไม่สำเร็จ"} — ถ้ายังไม่ได้ ลองนำเข้าไฟล์ .ics แทน
                 </p>
               )}
 
