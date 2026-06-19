@@ -130,10 +130,13 @@ npm run build
 
 | เครื่องมือ | เวอร์ชันที่ใช้ทดสอบ |
 |-----------|-------------------|
-| JDK 17 | Adoptium 17.0.19 (`C:/Users/kwanc/android-build/jdk-17.0.19+10`) |
-| Android SDK | API 33+ (ติดตั้งผ่าน Android Studio) |
+| JDK 17–21 | ใช้ **JBR ของ Android Studio** ได้เลย (`C:\Program Files\Android\Android Studio\jbr` — OpenJDK 21) |
+| Android SDK | API 33+ (ติดตั้งผ่าน Android Studio) — ระบุ path ใน `android/local.properties` → `sdk.dir=...` |
 | Capacitor CLI | รวมอยู่ใน `package.json` (ติดตั้งด้วย `npm install`) |
 | Gradle | 8.2.1 (bundled ใน Android project) |
+
+> ครั้งแรกต้องสร้าง `android/local.properties` (ถูก gitignore) ระบุที่ตั้ง SDK เช่น
+> `sdk.dir=C:/Users/<user>/AppData/Local/Android/Sdk`
 
 ### ขั้นตอน Build APK
 
@@ -147,13 +150,14 @@ npx cap sync android
 # ขั้นที่ 3: Build APK
 cd android
 
-# Windows (PowerShell / CMD)
-set JAVA_HOME=C:\Users\kwanc\android-build\jdk-17.0.19+10
+# Windows (PowerShell) — ใช้ JBR ของ Android Studio
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+.\gradlew.bat assembleDebug --no-daemon
 gradlew.bat assembleDebug --no-daemon
 
 # Windows (Git Bash / MSYS2)
-export JAVA_HOME="C:/Users/kwanc/android-build/jdk-17.0.19+10"
-MSYS_NO_PATHCONV=1 ./gradlew.bat assembleDebug --no-daemon
+# Git Bash / MSYS2 — set JAVA_HOME เป็น path JBR แล้วเรียกผ่าน cmd
+./gradlew.bat assembleDebug --no-daemon
 ```
 
 ไฟล์ APK อยู่ที่:
@@ -161,7 +165,7 @@ MSYS_NO_PATHCONV=1 ./gradlew.bat assembleDebug --no-daemon
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-> 💡 **ดาวน์โหลด APK สำเร็จรูป:** ไฟล์ `StudyHub-v3.apk` ในรากโปรเจค (ไม่ต้อง build เอง)
+> 💡 **ดาวน์โหลด APK สำเร็จรูป:** ไฟล์ `StudyHub-v4.apk` ในรากโปรเจค (ไม่ต้อง build เอง)
 
 ---
 
@@ -175,7 +179,7 @@ android/app/build/outputs/apk/debug/app-debug.apk
    - ต่อสาย USB → ลาก APK ไปยังเครื่อง
    - หรือส่งผ่าน Google Drive / Telegram
 
-3. **ติดตั้ง:** แตะไฟล์ `StudyHub-v3.apk` → กด **ติดตั้ง (Install)**
+3. **ติดตั้ง:** แตะไฟล์ `StudyHub-v4.apk` → กด **ติดตั้ง (Install)**
 
 4. เปิดแอป **Study Hub** จาก launcher ได้เลย
 
@@ -272,7 +276,7 @@ StudyHub/
 ├── android/                    # Capacitor Android project
 │   └── app/build/outputs/apk/ # APK output (gitignored)
 ├── public/
-├── StudyHub-v3.apk             # ✅ APK สำเร็จรูปสำหรับดาวน์โหลด
+├── StudyHub-v4.apk             # ✅ APK สำเร็จรูปสำหรับดาวน์โหลด
 ├── capacitor.config.ts
 ├── vite.config.ts
 └── package.json

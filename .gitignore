@@ -50,6 +50,8 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+vite.config.d.ts
+vite.config.js
 
 # OS
 .DS_Store
